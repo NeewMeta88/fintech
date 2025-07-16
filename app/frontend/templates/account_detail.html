@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Информация о счёте</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="account-id" content="{{ account_id }}">
+</head>
+<body>
+<h2>Счёт ID: <span id="account-id"></span></h2>
+<p><strong>Владелец:</strong> <span id="owner-name"></span></p>
+<p><strong>Баланс:</strong> <span id="balance"></span></p>
+<p><strong>Создан:</strong> <span id="created-at"></span></p>
+
+<button id="delete-account">Удалить счёт</button>
+<br><br>
+<a href="/dashboard/">Назад</a>
+
+<script>
+    const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+    const accountId = document.querySelector('meta[name="account-id"]').content;
+
+    async function loadAccount() {
+        const response = await fetch(`/api/accounts/${accountId}/`);
+        if (!response.ok) {
+            alert('Ошибка при загрузке счёта');
+            return;
+        }
+        const data = await response.json();
+        document.getElementById('account-id').textContent = data.id;
+        document.getElementById('owner-name').textContent = data.owner_name;
+        document.getElementById('balance').textContent = data.balance;
+        document.getElementById('created-at').textContent = new Date(data.created_at).toLocaleString();
+    }
+
+    async function deleteAccount() {
+        if (!confirm("Вы уверены, что хотите удалить счёт?")) return;
+
+        const response = await fetch(`/api/accounts/${accountId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        });
+
+        if (response.ok) {
+            alert("Счёт удалён");
+            window.location.href = "/dashboard/";
+        } else {
+            const data = await response.json();
+            alert(data.detail || 'Ошибка при удалении');
+        }
+    }
+
+    document.getElementById('delete-account').addEventListener('click', deleteAccount);
+
+    loadAccount();
+</script>
+</body>
+</html>

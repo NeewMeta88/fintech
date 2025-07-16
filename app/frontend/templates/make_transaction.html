@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Создать перевод</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+<h2>Создание перевода</h2>
+
+<label><input type="radio" name="recipient_type" value="self" checked> На свой счёт</label>
+<label><input type="radio" name="recipient_type" value="other"> На чужой счёт</label>
+
+<div id="from-account-block">
+    <label>Счёт отправителя:</label>
+    <select id="from-account"></select>
+</div>
+
+<div id="to-account-self" style="display: block;">
+    <label>Счёт получателя:</label>
+    <select id="to-account"></select>
+</div>
+
+<div id="to-account-other" style="display: none;">
+    <label>UUID счёта получателя:</label>
+    <input type="text" id="to-account-uuid">
+</div>
+
+<label>Сумма:</label>
+<input type="number" id="amount" step="0.01" min="0">
+
+<button onclick="submitTransaction()">Отправить</button>
+<button onclick="location.href='/dashboard/'">Назад</button>
+
+<script>
+    const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+
+    async function fetchAccounts() {
+        const res = await fetch('/api/accounts/');
+        const data = await res.json();
+        const fromSel = document.getElementById('from-account');
+        const toSel = document.getElementById('to-account');
+
+        data.forEach(acc => {
+            const option = new Option(`${acc.owner_name} — ${acc.balance}`, acc.id);
+            fromSel.add(option.cloneNode(true));
+            toSel.add(option.cloneNode(true));
+        });
+    }
+
+    document.getElementsByName('recipient_type').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const self = document.getElementById('to-account-self');
+            const other = document.getElementById('to-account-other');
+            if (radio.value === 'self' && radio.checked) {
+                self.style.display = 'block';
+                other.style.display = 'none';
+            } else if (radio.value === 'other' && radio.checked) {
+                self.style.display = 'none';
+                other.style.display = 'block';
+            }
+        });
+    });
+
+    async function submitTransaction() {
+        const from = document.getElementById('from-account').value;
+        const amount = document.getElementById('amount').value;
+        let to;
+
+        const recipientType = document.querySelector('input[name="recipient_type"]:checked').value;
+        if (recipientType === 'self') {
+            to = document.getElementById('to-account').value;
+        } else {
+            to = document.getElementById('to-account-uuid').value;
+        }
+
+        const response = await fetch('/api/transactions/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                from_account: from,
+                to_account: to,
+                amount: amount
+            })
+        });
+
+        if (response.ok) {
+            alert('Перевод выполнен');
+            location.href = '/dashboard/';
+        } else {
+            const err = await response.json();
+            alert('Ошибка: ' + JSON.stringify(err));
+        }
+    }
+
+    fetchAccounts();
+</script>
+</body>
+</html>
