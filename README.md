@@ -19,11 +19,19 @@ RESTful API для управления банковскими счетами и
 ### 1. Клонируйте репозиторий
 
 ```bash
-git clone https://github.com/your-user/bank-api.git
+git clone https://github.com/NeewMeta88/fintech.git
 cd fintech
 ```
 
-### 2. Создайте файл `.env` (необязательно для тестирования)
+### 2. Установите зависимости
+
+```bash
+python -m venv venv
+source venv/bin/activate        # или venv\Scripts\activate для Windows
+pip install -r requirements.txt
+```
+
+### 3. Создайте файл `.env` (необязательно для тестирования)
 Пример содержимого:
 
 ```
@@ -44,9 +52,9 @@ KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
 ALLOW_PLAINTEXT_LISTENER=yes
 ```
 
-## 🗃️ Начальные данные
+### 4. Начальные данные
 
-Для тестирования можно провести миграции:
+Проведите миграции:
 
 ```bash
 docker-compose exec web python manage.py migrate
@@ -60,7 +68,7 @@ docker-compose exec web python manage.py migrate
 
 ---
 
-### 3. Запустите проект
+### 5. Запустите проект
 
 ```bash
 docker-compose up --build
